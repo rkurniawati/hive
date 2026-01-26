@@ -232,14 +232,29 @@ public class SecurityUtils {
   }
 
   public static TServerSocket getServerSSLSocket(String hiveHost, int portNum, String keyStorePath,
-      String keyStorePassWord, String keyStoreType, String keyStoreAlgorithm, List<String> sslVersionBlacklist)
+      String keyStorePassWord, String keyStoreType, String keyStoreAlgorithm,
+      String trustStorePath, String trustStorePassword, String trustStoreType,
+      String trustStoreAlgorithm, List<String> sslVersionBlacklist)
       throws TTransportException, UnknownHostException {
+
     TSSLTransportFactory.TSSLTransportParameters params =
         new TSSLTransportFactory.TSSLTransportParameters();
+    
+    // server cert
     String kStoreType = keyStoreType.isEmpty()? KeyStore.getDefaultType() : keyStoreType;
     String kStoreAlgorithm = keyStoreAlgorithm.isEmpty()?
             KeyManagerFactory.getDefaultAlgorithm() : keyStoreAlgorithm;
     params.setKeyStore(keyStorePath, keyStorePassWord, kStoreAlgorithm, kStoreType);
+
+    // Truststore for client certificate verification (mTLS)
+    if (trustStorePath != null && !trustStorePath.isEmpty()) {
+      String tStoreType = trustStoreType.isEmpty()? KeyStore.getDefaultType() : trustStoreType;
+      String tStoreAlgorithm = trustStoreAlgorithm.isEmpty()?
+        TrustManagerFactory.getDefaultAlgorithm() : trustStoreAlgorithm;
+      params.setTrustStore(trustStorePath, trustStorePassword, tStoreAlgorithm, tStoreType);
+      params.requireClientAuth(true);
+    }
+
     InetSocketAddress serverAddress;
     if (hiveHost == null || hiveHost.isEmpty()) {
       // Wildcard bind
@@ -266,6 +281,13 @@ public class SecurityUtils {
       sslServerSocket.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
       LOG.info("SSL Server Socket Enabled Protocols: "
           + Arrays.toString(sslServerSocket.getEnabledProtocols()));
+      
+      // Verify and log client authentication settings
+      if (trustStorePath != null && !trustStorePath.isEmpty()) {
+        LOG.info("Client certificate verification enabled. NeedClientAuth: "
+            + sslServerSocket.getNeedClientAuth() + ", WantClientAuth: "
+            + sslServerSocket.getWantClientAuth());
+      }
     }
     return thriftServerSocket;
   }

@@ -582,6 +582,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           MetastoreConf.getVar(conf, ConfVars.SSL_KEYSTORE_TYPE).trim();
       String keyStoreAlgorithm =
           MetastoreConf.getVar(conf, ConfVars.SSL_KEYMANAGERFACTORY_ALGORITHM).trim();
+      
+      // Truststore configuration for client certificate verification (mTLS)
+      String trustStorePath = MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTSTORE_PATH).trim();
+      LOG.info("=== mTLS Configuration - Truststore path: '" + trustStorePath + "' (empty=" + trustStorePath.isEmpty() + ") ===");
+      String trustStorePassword =
+          MetastoreConf.getPassword(conf, MetastoreConf.ConfVars.SSL_TRUSTSTORE_PASSWORD);
+      String trustStoreType =
+          MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTSTORE_TYPE).trim();
+      String trustStoreAlgorithm =
+          MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTMANAGERFACTORY_ALGORITHM).trim();
+      
       // enable SSL support for HMS
       List<String> sslVersionBlacklist = new ArrayList<>();
       for (String sslVersion : MetastoreConf.getVar(conf, ConfVars.SSL_PROTOCOL_BLACKLIST).split(",")) {
@@ -589,7 +600,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
 
       serverSocket = SecurityUtils.getServerSSLSocket(msHost, port, keyStorePath,
-          keyStorePassword, keyStoreType, keyStoreAlgorithm, sslVersionBlacklist);
+          keyStorePassword, keyStoreType, keyStoreAlgorithm,
+          trustStorePath, trustStorePassword, trustStoreType, trustStoreAlgorithm,
+          sslVersionBlacklist);
     }
 
     if (tcpKeepAlive) {
