@@ -295,6 +295,14 @@ public class SecurityUtils {
   public static TTransport getSSLSocket(String host, int port, int socketTimeout, int connectionTimeout,
       String trustStorePath, String trustStorePassWord, String trustStoreType,
       String trustStoreAlgorithm) throws TTransportException {
+    return getSSLSocket(host, port, socketTimeout, connectionTimeout, trustStorePath, trustStorePassWord,
+        trustStoreType, trustStoreAlgorithm, null, null, null, null);
+  }
+
+  public static TTransport getSSLSocket(String host, int port, int socketTimeout, int connectionTimeout,
+      String trustStorePath, String trustStorePassWord, String trustStoreType,
+      String trustStoreAlgorithm, String keyStorePath, String keyStorePassword,
+      String keyStoreType, String keyStoreAlgorithm) throws TTransportException {
     TSSLTransportFactory.TSSLTransportParameters params =
         new TSSLTransportFactory.TSSLTransportParameters();
     String tStoreType = trustStoreType.isEmpty()? KeyStore.getDefaultType() : trustStoreType;
@@ -302,6 +310,16 @@ public class SecurityUtils {
         TrustManagerFactory.getDefaultAlgorithm() : trustStoreAlgorithm;
     params.setTrustStore(trustStorePath, trustStorePassWord,
         tStoreAlgorithm, tStoreType);
+    
+    // Configure keystore for client certificate authentication (mTLS)
+    if (keyStorePath != null && !keyStorePath.isEmpty()) {
+      String kStoreType = (keyStoreType == null || keyStoreType.isEmpty()) ?
+          KeyStore.getDefaultType() : keyStoreType;
+      String kStoreAlgorithm = (keyStoreAlgorithm == null || keyStoreAlgorithm.isEmpty()) ?
+          KeyManagerFactory.getDefaultAlgorithm() : keyStoreAlgorithm;
+      params.setKeyStore(keyStorePath, keyStorePassword, kStoreAlgorithm, kStoreType);
+    }
+    
     params.requireClientAuth(true);
     // The underlying SSLSocket object is bound to host:port with the given SO_TIMEOUT and
     // connection timeout and SSLContext created with the given params
@@ -318,7 +336,21 @@ public class SecurityUtils {
       String trustStorePasswd, String trustStoreAlgorithm, String trustStoreType,
       HttpClientBuilder underlyingHttpClientBuilder) throws TTransportException, IOException,
       KeyStoreException, NoSuchAlgorithmException, CertificateException,
-      KeyManagementException {
+      KeyManagementException, java.security.UnrecoverableKeyException {
+    return getThriftHttpsClient(httpsUrl, trustStorePath, trustStorePasswd, trustStoreAlgorithm,
+        trustStoreType, underlyingHttpClientBuilder, null, null, null, null);
+  }
+
+  /*
+  Sets the ssl related configs in the underlying http client builder and wrap it up
+  in a THttpClient. Supports mutual TLS (mTLS) when keystore parameters are provided.
+   */
+  public static THttpClient getThriftHttpsClient(String httpsUrl, String trustStorePath,
+      String trustStorePasswd, String trustStoreAlgorithm, String trustStoreType,
+      HttpClientBuilder underlyingHttpClientBuilder, String keyStorePath, String keyStorePassword,
+      String keyStoreType, String keyStoreAlgorithm) throws TTransportException, IOException,
+      KeyStoreException, NoSuchAlgorithmException, CertificateException,
+      KeyManagementException, java.security.UnrecoverableKeyException {
     Preconditions.checkNotNull(underlyingHttpClientBuilder, "httpClientBuilder should not be null");
     if (trustStoreType == null || trustStoreType.isEmpty()) {
       trustStoreType = KeyStore.getDefaultType();
@@ -328,9 +360,28 @@ public class SecurityUtils {
       sslTrustStore.load(fis, trustStorePasswd.toCharArray());
     }
 
-    SSLContext sslContext =
-        SSLContexts.custom().setTrustManagerFactoryAlgorithm(trustStoreAlgorithm).
-            loadTrustMaterial(sslTrustStore, null).build();
+    // Build SSL context with truststore
+    org.apache.http.ssl.SSLContextBuilder sslContextBuilder = SSLContexts.custom()
+        .setTrustManagerFactoryAlgorithm(trustStoreAlgorithm)
+        .loadTrustMaterial(sslTrustStore, null);
+
+    // Configure keystore for client certificate authentication (mTLS)
+    if (keyStorePath != null && !keyStorePath.isEmpty()) {
+      if (keyStoreType == null || keyStoreType.isEmpty()) {
+        keyStoreType = KeyStore.getDefaultType();
+      }
+      KeyStore sslKeyStore = KeyStore.getInstance(keyStoreType);
+      try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+        sslKeyStore.load(fis, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
+      }
+      if (keyStoreAlgorithm == null || keyStoreAlgorithm.isEmpty()) {
+        keyStoreAlgorithm = KeyManagerFactory.getDefaultAlgorithm();
+      }
+      sslContextBuilder.setKeyManagerFactoryAlgorithm(keyStoreAlgorithm)
+          .loadKeyMaterial(sslKeyStore, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
+    }
+
+    SSLContext sslContext = sslContextBuilder.build();
     SSLConnectionSocketFactory socketFactory =
         new SSLConnectionSocketFactory(sslContext, new DefaultHostnameVerifier(null));
     final Registry<ConnectionSocketFactory> registry =

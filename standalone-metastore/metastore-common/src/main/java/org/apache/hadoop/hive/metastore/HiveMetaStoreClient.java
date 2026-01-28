@@ -669,9 +669,23 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
         String trustStorePassword = MetastoreConf.getPassword(conf, MetastoreConf.ConfVars.SSL_TRUSTSTORE_PASSWORD);
         String trustStoreType = MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTSTORE_TYPE).trim();
         String trustStoreAlgorithm = MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTMANAGERFACTORY_ALGORITHM).trim();
+        
+        // Get keystore configuration for mutual TLS (mTLS)
+        String keyStorePath = MetastoreConf.getVar(conf, ConfVars.SSL_KEYSTORE_PATH).trim();
+        String keyStorePassword = null;
+        String keyStoreType = null;
+        String keyStoreAlgorithm = null;
+        
+        if (!keyStorePath.isEmpty()) {
+          keyStorePassword = MetastoreConf.getPassword(conf, MetastoreConf.ConfVars.SSL_KEYSTORE_PASSWORD);
+          keyStoreType = MetastoreConf.getVar(conf, ConfVars.SSL_KEYSTORE_TYPE).trim();
+          keyStoreAlgorithm = MetastoreConf.getVar(conf, ConfVars.SSL_KEYMANAGERFACTORY_ALGORITHM).trim();
+          LOG.info("Client keystore configured for mutual TLS: " + keyStorePath);
+        }
+        
         tHttpClient =
             SecurityUtils.getThriftHttpsClient(httpUrl, trustStorePath, trustStorePassword, trustStoreAlgorithm,
-                trustStoreType, httpClientBuilder);
+                trustStoreType, httpClientBuilder, keyStorePath, keyStorePassword, keyStoreType, keyStoreAlgorithm);
       } else {
         tHttpClient = new THttpClient(httpUrl, httpClientBuilder.build());
       }
@@ -753,8 +767,23 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
             MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTSTORE_TYPE).trim();
         String trustStoreAlgorithm =
             MetastoreConf.getVar(conf, ConfVars.SSL_TRUSTMANAGERFACTORY_ALGORITHM).trim();
+        
+        // Get keystore configuration for mutual TLS (mTLS)
+        String keyStorePath = MetastoreConf.getVar(conf, ConfVars.SSL_KEYSTORE_PATH).trim();
+        String keyStorePassword = null;
+        String keyStoreType = null;
+        String keyStoreAlgorithm = null;
+        
+        if (!keyStorePath.isEmpty()) {
+          keyStorePassword = MetastoreConf.getPassword(conf, MetastoreConf.ConfVars.SSL_KEYSTORE_PASSWORD);
+          keyStoreType = MetastoreConf.getVar(conf, ConfVars.SSL_KEYSTORE_TYPE).trim();
+          keyStoreAlgorithm = MetastoreConf.getVar(conf, ConfVars.SSL_KEYMANAGERFACTORY_ALGORITHM).trim();
+          LOG.info("Client keystore configured for mutual TLS: " + keyStorePath);
+        }
+        
         binaryTransport = SecurityUtils.getSSLSocket(store.getHost(), store.getPort(), clientSocketTimeout,
-            connectionTimeout, trustStorePath, trustStorePassword, trustStoreType, trustStoreAlgorithm);
+            connectionTimeout, trustStorePath, trustStorePassword, trustStoreType, trustStoreAlgorithm,
+            keyStorePath, keyStorePassword, keyStoreType, keyStoreAlgorithm);
       } else {
         binaryTransport = new TSocket(new TConfiguration(), store.getHost(), store.getPort(),
             clientSocketTimeout, connectionTimeout);
