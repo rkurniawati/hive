@@ -904,11 +904,25 @@ public class HiveConf extends Configuration {
     METASTORE_DB_TYPE("hive.metastore.db.type", "DERBY", new StringSet("DERBY", "ORACLE", "MYSQL", "MSSQL", "POSTGRES"),
         "Type of database used by the metastore. Information schema & JDBCStorageHandler depend on it."),
     /**
+     * @deprecated Use METASTORE_DB_TYPE (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTOREDBTYPE("hive.metastore.db.type", "DERBY", new StringSet("DERBY", "ORACLE", "MYSQL", "MSSQL", "POSTGRES"),
+        "Type of database used by the metastore. Information schema & JDBCStorageHandler depend on it."),
+
+    /**
      * @deprecated Use MetastoreConf.WAREHOUSE
      */
     @Deprecated
     METASTORE_WAREHOUSE("hive.metastore.warehouse.dir", "/user/hive/warehouse",
         "location of default database for the warehouse"),
+    /**
+     * @deprecated Use METASTORE_WAREHOUSE (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTOREWAREHOUSE("hive.metastore.warehouse.dir", "/user/hive/warehouse",
+        "location of default database for the warehouse"),
+
 
     HIVE_METASTORE_WAREHOUSE_EXTERNAL("hive.metastore.warehouse.external.dir", null,
         "Default location for external tables created in the warehouse. " +
@@ -920,6 +934,13 @@ public class HiveConf extends Configuration {
     @Deprecated
     METASTORE_URIS("hive.metastore.uris", "",
         "Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore."),
+    /**
+     * @deprecated Use METASTORE_URIS (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTOREURIS("hive.metastore.uris", "",
+        "Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore."),
+
 
     /**
      * @deprecated Use MetastoreConf.THRIFT_URI_SELECTION
@@ -931,6 +952,17 @@ public class HiveConf extends Configuration {
             "metastore.  SEQUENTIAL implies that the first valid metastore from the URIs specified " +
             "as part of hive.metastore.uris will be picked.  RANDOM implies that the metastore " +
             "will be picked randomly"),
+    /**
+     * @deprecated Use METASTORE_SELECTION (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORESELECTION("hive.metastore.uri.selection", "RANDOM",
+        new StringSet("SEQUENTIAL", "RANDOM"),
+        "Determines the selection mechanism used by metastore client to connect to remote " +
+            "metastore.  SEQUENTIAL implies that the first valid metastore from the URIs specified " +
+            "as part of hive.metastore.uris will be picked.  RANDOM implies that the metastore " +
+            "will be picked randomly"),
+
     /**
      * @deprecated Use MetastoreConf.CAPABILITY_CHECK
      */
@@ -979,11 +1011,25 @@ public class HiveConf extends Configuration {
     METASTORE_THRIFT_CONNECTION_RETRIES("hive.metastore.connect.retries", 3,
         "Number of retries while opening a connection to metastore"),
     /**
+     * @deprecated Use METASTORE_THRIFT_CONNECTION_RETRIES (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORETHRIFTCONNECTIONRETRIES("hive.metastore.connect.retries", 3,
+        "Number of retries while opening a connection to metastore"),
+
+    /**
      * @deprecated Use MetastoreConf.THRIFT_FAILURE_RETRIES
      */
     @Deprecated
     METASTORE_THRIFT_FAILURE_RETRIES("hive.metastore.failure.retries", 1,
         "Number of retries upon failure of Thrift metastore calls"),
+    /**
+     * @deprecated Use METASTORE_THRIFT_FAILURE_RETRIES (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORETHRIFTFAILURERETRIES("hive.metastore.failure.retries", 1,
+        "Number of retries upon failure of Thrift metastore calls"),
+
     /**
      * @deprecated Use MetastoreConf.SERVER_PORT
      */
@@ -1019,17 +1065,38 @@ public class HiveConf extends Configuration {
     METASTORE_PWD("javax.jdo.option.ConnectionPassword", "mine",
         "password to use against metastore database"),
     /**
+     * @deprecated Use METASTORE_PWD (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTOREPWD("javax.jdo.option.ConnectionPassword", "mine",
+        "password to use against metastore database"),
+
+    /**
      * @deprecated Use MetastoreConf.CONNECT_URL_HOOK
      */
     @Deprecated
     METASTORE_CONNECT_URL_HOOK("hive.metastore.ds.connection.url.hook", "",
         "Name of the hook to use for retrieving the JDO connection URL. If empty, the value in javax.jdo.option.ConnectionURL is used"),
     /**
+     * @deprecated Use METASTORE_CONNECT_URL_HOOK (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORECONNECTURLHOOK("hive.metastore.ds.connection.url.hook", "",
+        "Name of the hook to use for retrieving the JDO connection URL. If empty, the value in javax.jdo.option.ConnectionURL is used"),
+
+    /**
      * @deprecated Use MetastoreConf.MULTITHREADED
      */
     @Deprecated
     METASTORE_MULTI_THREADED("javax.jdo.option.Multithreaded", true,
         "Set this to true if multiple threads access metastore through JDO concurrently."),
+    /**
+     * @deprecated Use METASTORE_MULTI_THREADED (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTOREMULTITHREADED("javax.jdo.option.Multithreaded", true,
+        "Set this to true if multiple threads access metastore through JDO concurrently."),
+
     /**
      * @deprecated Use MetastoreConf.CONNECT_URL_KEY
      */
@@ -1039,6 +1106,16 @@ public class HiveConf extends Configuration {
         "JDBC connect string for a JDBC metastore.\n" +
         "To use SSL to encrypt/authenticate the connection, provide database-specific SSL flag in the connection URL.\n" +
         "For example, jdbc:postgresql://myhost/db?ssl=true for postgres database."),
+    /**
+     * @deprecated Use METASTORE_CONNECT_URL_KEY (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORECONNECTURLKEY("javax.jdo.option.ConnectionURL",
+        "jdbc:derby:;databaseName=metastore_db;create=true",
+        "JDBC connect string for a JDBC metastore.\n" +
+        "To use SSL to encrypt/authenticate the connection, provide database-specific SSL flag in the connection URL.\n" +
+        "For example, jdbc:postgresql://myhost/db?ssl=true for postgres database."),
+
     /**
      * @deprecated Use MetastoreConf.DBACCESS_SSL_PROPS
      */
@@ -1074,17 +1151,38 @@ public class HiveConf extends Configuration {
     METASTORE_SERVER_MAX_MESSAGE_SIZE("hive.metastore.server.max.message.size", 100*1024*1024L,
         "Maximum message size in bytes a HMS will accept."),
     /**
+     * @deprecated Use METASTORE_SERVER_MAX_MESSAGE_SIZE (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORESERVERMAXMESSAGESIZE("hive.metastore.server.max.message.size", 100*1024*1024L,
+        "Maximum message size in bytes a HMS will accept."),
+
+    /**
      * @deprecated Use MetastoreConf.SERVER_MIN_THREADS
      */
     @Deprecated
     METASTORE_SERVER_MIN_THREADS("hive.metastore.server.min.threads", 200,
         "Minimum number of worker threads in the Thrift server's pool."),
     /**
+     * @deprecated Use METASTORE_SERVER_MIN_THREADS (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORESERVERMINTHREADS("hive.metastore.server.min.threads", 200,
+        "Minimum number of worker threads in the Thrift server's pool."),
+
+    /**
      * @deprecated Use MetastoreConf.SERVER_MAX_THREADS
      */
     @Deprecated
     METASTORE_SERVER_MAX_THREADS("hive.metastore.server.max.threads", 1000,
         "Maximum number of worker threads in the Thrift server's pool."),
+    /**
+     * @deprecated Use METASTORE_SERVER_MAX_THREADS (renamed for consistency with underscore naming convention)
+     */
+    @Deprecated
+    METASTORESERVERMAXTHREADS("hive.metastore.server.max.threads", 1000,
+        "Maximum number of worker threads in the Thrift server's pool."),
+
     /**
      * @deprecated Use MetastoreConf.TCP_KEEP_ALIVE
      */
